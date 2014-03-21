@@ -1,4 +1,4 @@
 authentication-shiro
 ====================
 
-Authentication components based on Apache Shiro.
+Authentication components based on authentication-simple and Apache Shiro.
