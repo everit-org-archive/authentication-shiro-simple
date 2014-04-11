@@ -379,4 +379,17 @@
 
 	</dependencies>
 
+	<repositories>
+		<repository>
+			<id>everit.public</id>
+			<url>http://repository.everit.biz/nexus/content/groups/public/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
 </project>

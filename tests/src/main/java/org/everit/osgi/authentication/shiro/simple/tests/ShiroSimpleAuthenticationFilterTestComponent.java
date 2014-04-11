@@ -80,8 +80,8 @@ public class ShiroSimpleAuthenticationFilterTestComponent {
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> componentProperties)
             throws Exception {
-        guestUri = "http://localhost:" + port + "/hello/guest";
-        secureUri = "http://localhost:" + port + "/hello/secure";
+        guestUri = "http://localhost:" + port + "/hello/basic/guest";
+        secureUri = "http://localhost:" + port + "/hello/basic/protected";
 
         defaultSubjectResourceId = Long.valueOf(
                 propertyService.getProperty(AuthenticationService.PROP_DEFAULT_SUBJECT_RESOURCE_ID)).longValue();

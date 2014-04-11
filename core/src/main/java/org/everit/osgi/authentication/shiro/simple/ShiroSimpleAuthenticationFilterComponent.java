@@ -37,21 +37,27 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.log.LogService;
 
 @Component(name = ShiroSimpleAuthenticationFilterConstants.COMPONENT_NAME, metatype = true,
         configurationFactory = true, policy = ConfigurationPolicy.REQUIRE)
 @Properties({
-        @Property(name = ShiroSimpleAuthenticationFilterConstants.FILTER_NAME),
+        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_FILTER_NAME),
         @Property(name = HttpWhiteboardConstants.PATTERN),
         @Property(name = HttpWhiteboardConstants.CONTEXT_ID),
-        @Property(name = ShiroSimpleAuthenticationFilterConstants.FILTER_RANKING),
+        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_FILTER_RANKING),
+        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_CAS_LOGIN_URL,
+                value = ShiroSimpleAuthenticationFilterConstants.DEFAULT_CAS_LOGIN_URL),
+        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_CAS_FAILURE_URL,
+                value = ShiroSimpleAuthenticationFilterConstants.DEFAULT_CAS_FAILURE_URL),
         @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_GLOBAL_SESSION_TIMEOUT,
                 longValue = ShiroSimpleAuthenticationFilterConstants.DEFAULT_GLOBAL_SESSION_TIMEOUT),
         @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_SHIRO_INI_LOCATION,
                 value = ShiroSimpleAuthenticationFilterConstants.DEFAULT_SHIRO_INI_LOCATION),
         @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_AUTHENTICATION_SERVICE_TARGET),
         @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_SIMPLE_SUBJECT_SERVICE_TARGET),
-        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_REALM_TARGET)
+        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_REALM_TARGET),
+        @Property(name = ShiroSimpleAuthenticationFilterConstants.PROP_LOG_SERVICE_TARGET)
 })
 public class ShiroSimpleAuthenticationFilterComponent {
 
@@ -64,6 +70,9 @@ public class ShiroSimpleAuthenticationFilterComponent {
     @Reference
     private Realm realm;
 
+    @Reference
+    private LogService logService;
+
     private ServiceRegistration<Filter> shiroFilterSR;
 
     private ServiceRegistration<Filter> shiroSimpleAuthFilterSR;
@@ -71,14 +80,18 @@ public class ShiroSimpleAuthenticationFilterComponent {
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> componentProperties)
             throws Exception {
-
         String filterName = getStringProperty(componentProperties,
-                ShiroSimpleAuthenticationFilterConstants.FILTER_NAME);
-        String pattern = getStringProperty(componentProperties, HttpWhiteboardConstants.PATTERN);
-        String contextId = getStringProperty(componentProperties, HttpWhiteboardConstants.CONTEXT_ID);
+                ShiroSimpleAuthenticationFilterConstants.PROP_FILTER_NAME);
+        String pattern = getStringProperty(componentProperties,
+                HttpWhiteboardConstants.PATTERN);
+        String contextId = getStringProperty(componentProperties,
+                HttpWhiteboardConstants.CONTEXT_ID);
         int ranking = Integer.valueOf(getStringProperty(componentProperties,
-                ShiroSimpleAuthenticationFilterConstants.FILTER_RANKING));
-
+                ShiroSimpleAuthenticationFilterConstants.PROP_FILTER_RANKING));
+        String casLoginUrl = getStringProperty(componentProperties,
+                ShiroSimpleAuthenticationFilterConstants.PROP_CAS_LOGIN_URL);
+        String casFailureUrl = getStringProperty(componentProperties,
+                ShiroSimpleAuthenticationFilterConstants.PROP_CAS_FAILURE_URL);
         long globalSessionTimeout = Long.valueOf(
                 getStringProperty(componentProperties,
                         ShiroSimpleAuthenticationFilterConstants.PROP_GLOBAL_SESSION_TIMEOUT))
@@ -86,29 +99,33 @@ public class ShiroSimpleAuthenticationFilterComponent {
         String shiroIniLocation = getStringProperty(componentProperties,
                 ShiroSimpleAuthenticationFilterConstants.PROP_SHIRO_INI_LOCATION);
 
-        Filter shiroFilter = new ShiroFilter(globalSessionTimeout, shiroIniLocation, realm);
+        Filter shiroFilter =
+                new DefaultShiroFilter(globalSessionTimeout, shiroIniLocation, realm, casLoginUrl, casFailureUrl);
         Dictionary<String, Object> shiroFilterProperties = new Hashtable<>();
-        shiroFilterProperties.put(ShiroSimpleAuthenticationFilterConstants.FILTER_NAME,
-                filterName + "-" + ShiroFilter.class.getSimpleName());
+        shiroFilterProperties.put(ShiroSimpleAuthenticationFilterConstants.PROP_FILTER_NAME,
+                filterName + "-" + DefaultShiroFilter.class.getSimpleName());
         shiroFilterProperties.put(HttpWhiteboardConstants.PATTERN, pattern);
         shiroFilterProperties.put(HttpWhiteboardConstants.CONTEXT_ID, contextId);
-        shiroFilterProperties.put(Constants.SERVICE_RANKING,
-                ranking);
+        shiroFilterProperties.put(Constants.SERVICE_RANKING, ranking);
         shiroFilterSR = context.registerService(Filter.class, shiroFilter, shiroFilterProperties);
 
-        Filter shiroSimpleFilter = new ShiroSimpleAuthenticationFilter(authenticationService, simpleSubjectService);
+        Filter shiroSimpleFilter =
+                new ShiroSimpleAuthenticationFilter(authenticationService, simpleSubjectService, logService);
         Dictionary<String, Object> shiroSimpleProperties = new Hashtable<>();
-        shiroSimpleProperties.put(ShiroSimpleAuthenticationFilterConstants.FILTER_NAME,
+        shiroSimpleProperties.put(ShiroSimpleAuthenticationFilterConstants.PROP_FILTER_NAME,
                 filterName + "-" + ShiroSimpleAuthenticationFilter.class.getSimpleName());
         shiroSimpleProperties.put(HttpWhiteboardConstants.PATTERN, pattern);
         shiroSimpleProperties.put(HttpWhiteboardConstants.CONTEXT_ID, contextId);
-        shiroSimpleProperties.put(Constants.SERVICE_RANKING,
-                ranking - 1);
-        context.registerService(Filter.class, shiroSimpleFilter, shiroSimpleProperties);
+        shiroSimpleProperties.put(Constants.SERVICE_RANKING, ranking - 1);
+        shiroSimpleAuthFilterSR = context.registerService(Filter.class, shiroSimpleFilter, shiroSimpleProperties);
     }
 
     public void bindAuthenticationService(final AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
+    }
+
+    public void bindLogService(final LogService logService) {
+        this.logService = logService;
     }
 
     public void bindRealm(final Realm realm) {

@@ -30,6 +30,7 @@ import org.everit.osgi.authentication.api.AuthenticatedAction;
 import org.everit.osgi.authentication.api.AuthenticationService;
 import org.everit.osgi.authentication.api.Subject;
 import org.everit.osgi.authentication.simple.SimpleSubjectService;
+import org.osgi.service.log.LogService;
 
 public class ShiroSimpleAuthenticationFilter implements Filter {
 
@@ -37,11 +38,14 @@ public class ShiroSimpleAuthenticationFilter implements Filter {
 
     private final SimpleSubjectService simpleSubjectService;
 
+    private final LogService logService;
+
     public ShiroSimpleAuthenticationFilter(final AuthenticationService authenticationService,
-            final SimpleSubjectService simpleSubjectService) {
+            final SimpleSubjectService simpleSubjectService, final LogService logService) {
         super();
         this.authenticationService = authenticationService;
         this.simpleSubjectService = simpleSubjectService;
+        this.logService = logService;
     }
 
     @Override
@@ -56,6 +60,11 @@ public class ShiroSimpleAuthenticationFilter implements Filter {
         if (principalObject != null) {
             String principal = String.valueOf(principalObject);
             subject = simpleSubjectService.readByPrincipal(principal);
+            if (subject == null) {
+                logService.log(LogService.LOG_WARNING, "simple subject not available by principal [" + principal
+                        + "], continue as default subject (aka GUEST)");
+                subject = authenticationService.getCurrentSubject();
+            }
         } else {
             subject = authenticationService.getCurrentSubject();
         }

@@ -20,9 +20,25 @@ public final class ShiroSimpleAuthenticationFilterConstants {
 
     public static final String COMPONENT_NAME = "org.everit.osgi.authentication.shiro.simple.ShiroSimpleAuthenticationFilter";
 
-    public static final String FILTER_NAME = "filterName";
+    public static final String PROP_FILTER_NAME = "filterName";
 
-    public static final String FILTER_RANKING = "filterRanking";
+    public static final String PROP_FILTER_RANKING = "filterRanking";
+
+    public static final String PROP_GLOBAL_SESSION_TIMEOUT = "globalSessionTimeout";
+
+    public static final long DEFAULT_GLOBAL_SESSION_TIMEOUT = 3600000;
+
+    public static final String PROP_SHIRO_INI_LOCATION = "shiroIniLocation";
+
+    public static final String DEFAULT_SHIRO_INI_LOCATION = "configuration/shiro.ini";
+
+    public static final String PROP_CAS_LOGIN_URL = "casloginUrl";
+
+    public static final String DEFAULT_CAS_LOGIN_URL = "http://localhost:18080/cas/login?service=http://localhost:8080/hello/cas/shiro-cas";
+
+    public static final String PROP_CAS_FAILURE_URL = "casFailureUrl";
+
+    public static final String DEFAULT_CAS_FAILURE_URL = "/error.jsp";
 
     public static final String PROP_AUTHENTICATION_SERVICE_TARGET = "authenticationService.target";
 
@@ -30,13 +46,7 @@ public final class ShiroSimpleAuthenticationFilterConstants {
 
     public static final String PROP_REALM_TARGET = "realm.target";
 
-    public static final String PROP_GLOBAL_SESSION_TIMEOUT = "globalSessionTimeout";
-
-    public static final String PROP_SHIRO_INI_LOCATION = "shiroIniLocation";
-
-    public static final long DEFAULT_GLOBAL_SESSION_TIMEOUT = 3600000; // one hour
-
-    public static final String DEFAULT_SHIRO_INI_LOCATION = "configuration/shiro.ini";
+    public static final String PROP_LOG_SERVICE_TARGET = "logService.target";
 
     private ShiroSimpleAuthenticationFilterConstants() {
     }
