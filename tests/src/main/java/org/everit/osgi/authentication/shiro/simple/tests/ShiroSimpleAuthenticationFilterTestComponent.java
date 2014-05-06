@@ -45,6 +45,7 @@ import org.everit.osgi.props.PropertyService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.http.HttpService;
 
 @Component(name = "ShiroSimpleAuthenticationFilterTest", immediate = true, configurationFactory = false,
         policy = ConfigurationPolicy.OPTIONAL)
@@ -52,7 +53,8 @@ import org.osgi.framework.BundleContext;
         @Property(name = TestRunnerConstants.SERVICE_PROPERTY_TESTRUNNER_ENGINE_TYPE, value = "junit4"),
         @Property(name = TestRunnerConstants.SERVICE_PROPERTY_TEST_ID, value = "ShiroSimpleAuthenticationFilterTest"),
         @Property(name = "propertyService.target"),
-        @Property(name = "simpleSubjectService.target")
+        @Property(name = "simpleSubjectService.target"),
+        @Property(name = "httpService.target", value = "(org.osgi.service.http.port=*)")
 })
 @Service(value = ShiroSimpleAuthenticationFilterTestComponent.class)
 public class ShiroSimpleAuthenticationFilterTestComponent {
@@ -63,9 +65,12 @@ public class ShiroSimpleAuthenticationFilterTestComponent {
     @Reference
     private SimpleSubjectService simpleSubjectService;
 
+    @Reference
+    private HttpService httpService;
+
     private long defaultSubjectResourceId;
 
-    private int port = 8080; // TODO define port dynamically
+    private int port;
 
     private String guestUri;
 
@@ -80,6 +85,7 @@ public class ShiroSimpleAuthenticationFilterTestComponent {
     @Activate
     public void activate(final BundleContext context, final Map<String, Object> componentProperties)
             throws Exception {
+        // port = getPort();
         guestUri = "http://localhost:" + port + "/hello/basic/guest";
         secureUri = "http://localhost:" + port + "/hello/basic/protected";
 
@@ -116,6 +122,11 @@ public class ShiroSimpleAuthenticationFilterTestComponent {
         }
     }
 
+    public void bindHttpService(final HttpService httpService, final Map<String, Object> properties) {
+        this.httpService = httpService;
+        port = Integer.valueOf((String) properties.get("org.osgi.service.http.port"));
+    }
+
     public void bindPropertyService(final PropertyService propertyService) {
         this.propertyService = propertyService;
     }
@@ -123,6 +134,16 @@ public class ShiroSimpleAuthenticationFilterTestComponent {
     public void bindSimpleSubjectService(final SimpleSubjectService simpleSubjectService) {
         this.simpleSubjectService = simpleSubjectService;
     }
+
+    // private int getPort() {
+    // Connector[] connectors = server.getConnectors();
+    // for (Connector connector : connectors) {
+    // if (connector.isStarted()) {
+    // return connector.getLocalPort();
+    // }
+    // }
+    // throw new RuntimeException("No opened connector found for Jetty server");
+    // }
 
     @Test
     public void testAnonAccessGuestUri() throws Exception {
