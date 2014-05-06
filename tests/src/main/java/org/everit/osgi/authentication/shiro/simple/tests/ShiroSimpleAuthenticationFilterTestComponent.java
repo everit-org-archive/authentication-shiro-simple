@@ -125,6 +125,8 @@ public class ShiroSimpleAuthenticationFilterTestComponent {
     public void bindHttpService(final HttpService httpService, final Map<String, Object> properties) {
         this.httpService = httpService;
         port = Integer.valueOf((String) properties.get("org.osgi.service.http.port"));
+        port--; // TODO port must be decremented because the port of the Server is less than the value of the service
+                // portperty queried above
     }
 
     public void bindPropertyService(final PropertyService propertyService) {
